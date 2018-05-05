@@ -126,7 +126,7 @@ defmodule Fastimage do
       iex> Fastimage.info("https://raw.githubusercontent.com/stephenmoloney/fastimage/master/priv/test.jpg")
       {:ok,
         %Fastimage{
-         dimensions: %Fastimage.Dimensions{height: 142, width: 283},
+         dimensions: %Fastimage.Dimensions{height: 142, width: 283, depth: 24},
          image_type: :jpeg,
          source: "https://raw.githubusercontent.com/stephenmoloney/fastimage/master/priv/test.jpg",
          source_type: :url
@@ -157,7 +157,7 @@ defmodule Fastimage do
 
       iex> Fastimage.info!("https://raw.githubusercontent.com/stephenmoloney/fastimage/master/priv/test.jpg")
       %Fastimage{
-        dimensions: %Fastimage.Dimensions{height: 142, width: 283},
+        dimensions: %Fastimage.Dimensions{height: 142, width: 283, depth: 24},
         image_type: :jpeg,
         source: "https://raw.githubusercontent.com/stephenmoloney/fastimage/master/priv/test.jpg",
         source_type: :url
@@ -202,7 +202,7 @@ defmodule Fastimage do
   ## Example
 
       iex> Fastimage.size("https://raw.githubusercontent.com/stephenmoloney/fastimage/master/priv/test.jpg")
-      {:ok, %Fastimage.Dimensions{height: 142, width: 283}}
+      {:ok, %Fastimage.Dimensions{height: 142, width: 283, depth: 24}}
 
   """
   @spec size(binary()) :: {:ok, Dimensions.t()} | {:error, Error.t()}
@@ -223,7 +223,7 @@ defmodule Fastimage do
   ## Example
 
       iex> Fastimage.size!("https://raw.githubusercontent.com/stephenmoloney/fastimage/master/priv/test.jpg")
-      %Fastimage.Dimensions{height: 142, width: 283}
+      %Fastimage.Dimensions{height: 142, width: 283, depth: 24}
   """
   @spec size!(binary()) :: Dimensions.t() | no_return()
   def size!(source, opts \\ []) when is_binary(source) do

@@ -3,10 +3,12 @@ defmodule Fastimage.Dimensions do
   alias __MODULE__
 
   defstruct width: nil,
-            height: nil
+            height: nil,
+            depth: nil
 
   @type t :: %Dimensions{
           width: integer() | nil,
-          height: integer() | nil
+          height: integer() | nil,
+          depth: integer() | nil
         }
 end

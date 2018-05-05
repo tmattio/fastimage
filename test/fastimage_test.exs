@@ -2,7 +2,11 @@ defmodule FastimageTest do
   use ExUnit.Case, async: true
   doctest Fastimage
 
-  @expected_size %Fastimage.Dimensions{width: 283, height: 142}
+  @expected_jpeg_size %Fastimage.Dimensions{width: 283, height: 142, depth: 24}
+  @expected_png_size %Fastimage.Dimensions{width: 283, height: 142, depth: 8}
+  @expected_gif_size %Fastimage.Dimensions{width: 283, height: 142, depth: 8}
+  @expected_bmp_size %Fastimage.Dimensions{width: 283, height: 142, depth: 24}
+
   @fastimage_task_timeout 3_000
 
   @jpg_url "https://raw.githubusercontent.com/stephenmoloney/fastimage/master/priv/test.jpg"
@@ -28,7 +32,7 @@ defmodule FastimageTest do
     actual_size = Fastimage.size(@jpg_url)
 
     expected_type = {:ok, :jpeg}
-    expected_size = {:ok, @expected_size}
+    expected_size = {:ok, @expected_jpeg_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -39,7 +43,7 @@ defmodule FastimageTest do
     expected_type = {:ok, :jpeg}
 
     actual_size = Fastimage.size(@jpg_url_with_query)
-    expected_size = {:ok, %Fastimage.Dimensions{width: 40, height: 40}}
+    expected_size = {:ok, %Fastimage.Dimensions{width: 40, height: 40, depth: 24}}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -50,7 +54,7 @@ defmodule FastimageTest do
     actual_size = Fastimage.size(@jpg_file)
 
     expected_type = {:ok, :jpeg}
-    expected_size = {:ok, @expected_size}
+    expected_size = {:ok, @expected_jpeg_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -61,7 +65,7 @@ defmodule FastimageTest do
     actual_size = Fastimage.size(@jpg_binary)
 
     expected_type = {:ok, :jpeg}
-    expected_size = {:ok, @expected_size}
+    expected_size = {:ok, @expected_jpeg_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -72,7 +76,7 @@ defmodule FastimageTest do
     actual_size = Fastimage.size(@png_url)
 
     expected_type = {:ok, :png}
-    expected_size = {:ok, @expected_size}
+    expected_size = {:ok, @expected_png_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -83,7 +87,7 @@ defmodule FastimageTest do
     actual_size = Fastimage.size(@png_file)
 
     expected_type = {:ok, :png}
-    expected_size = {:ok, @expected_size}
+    expected_size = {:ok, @expected_png_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -94,7 +98,7 @@ defmodule FastimageTest do
     actual_size = Fastimage.size(@png_binary)
 
     expected_type = {:ok, :png}
-    expected_size = {:ok, @expected_size}
+    expected_size = {:ok, @expected_png_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -105,7 +109,7 @@ defmodule FastimageTest do
     actual_size = Fastimage.size(@gif_url)
 
     expected_type = {:ok, :gif}
-    expected_size = {:ok, @expected_size}
+    expected_size = {:ok, @expected_gif_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -116,7 +120,7 @@ defmodule FastimageTest do
     actual_size = Fastimage.size(@gif_file)
 
     expected_type = {:ok, :gif}
-    expected_size = {:ok, @expected_size}
+    expected_size = {:ok, @expected_gif_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -127,7 +131,7 @@ defmodule FastimageTest do
     actual_size = Fastimage.size(@gif_binary)
 
     expected_type = {:ok, :gif}
-    expected_size = {:ok, @expected_size}
+    expected_size = {:ok, @expected_gif_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -138,7 +142,7 @@ defmodule FastimageTest do
     actual_size = Fastimage.size(@bmp_url)
 
     expected_type = {:ok, :bmp}
-    expected_size = {:ok, @expected_size}
+    expected_size = {:ok, @expected_bmp_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -149,7 +153,7 @@ defmodule FastimageTest do
     actual_size = Fastimage.size(@bmp_file)
 
     expected_type = {:ok, :bmp}
-    expected_size = {:ok, @expected_size}
+    expected_size = {:ok, @expected_bmp_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -160,7 +164,7 @@ defmodule FastimageTest do
     actual_size = Fastimage.size(@bmp_binary)
 
     expected_type = {:ok, :bmp}
-    expected_size = {:ok, @expected_size}
+    expected_size = {:ok, @expected_bmp_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -185,7 +189,7 @@ defmodule FastimageTest do
 
   test "Get the size of an image behind a redirect" do
     actual_size = Fastimage.size(@jpg_with_redirect)
-    expected_size = {:ok, %Fastimage.Dimensions{width: 1200, height: 1230}}
+    expected_size = {:ok, %Fastimage.Dimensions{width: 1200, height: 1230, depth: 24}}
 
     assert(actual_size == expected_size)
   end
@@ -207,12 +211,12 @@ defmodule FastimageTest do
 
   defp list_expected_results do
     result = [
-      %Fastimage.Dimensions{width: 283, height: 142},
-      %Fastimage.Dimensions{width: 40, height: 40},
-      %Fastimage.Dimensions{width: 1200, height: 1230},
-      %Fastimage.Dimensions{width: 283, height: 142},
-      %Fastimage.Dimensions{width: 283, height: 142},
-      %Fastimage.Dimensions{width: 283, height: 142}
+      %Fastimage.Dimensions{width: 283, height: 142, depth: 24},
+      %Fastimage.Dimensions{width: 40, height: 40, depth: 24},
+      %Fastimage.Dimensions{width: 1200, height: 1230, depth: 24},
+      %Fastimage.Dimensions{width: 283, height: 142, depth: 24},
+      %Fastimage.Dimensions{width: 283, height: 142, depth: 24},
+      %Fastimage.Dimensions{width: 283, height: 142, depth: 24}
     ]
 
     Enum.reduce(1..10, [], fn _i, acc ->

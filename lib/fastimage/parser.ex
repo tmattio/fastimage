@@ -1,4 +1,6 @@
 defmodule Fastimage.Parser do
+  use Bitwise
+  
   @moduledoc false
   alias Fastimage.{Dimensions, Error, Parser, Stream, Utils}
 
@@ -129,7 +131,7 @@ defmodule Fastimage.Parser do
         next_bytes = :erlang.binary_part(next_data, {3, :erlang.byte_size(next_data) - 3})
         <<height::unsigned-integer-size(16), next_bytes::binary>> = next_bytes
         <<width::unsigned-integer-size(16), _next_bytes::binary>> = next_bytes
-        {:ok, %Dimensions{width: width, height: height}}
+        {:ok, %Dimensions{width: width, height: height, depth: 24}}
     end
   end
 
@@ -174,41 +176,48 @@ defmodule Fastimage.Parser do
 
   @doc false
   def parse_png(data) do
-    next_bytes = :erlang.binary_part(data, {16, 8})
+    next_bytes = :erlang.binary_part(data, {16, 9})
     <<width::unsigned-integer-size(32), next_bytes::binary>> = next_bytes
-    <<height::unsigned-integer-size(32), _next_bytes::binary>> = next_bytes
-    {:ok, %Dimensions{width: width, height: height}}
+    <<height::unsigned-integer-size(32), next_bytes::binary>> = next_bytes
+    <<depth::unsigned-integer-size(8), _next_bytes::binary>> = next_bytes
+    {:ok, %Dimensions{width: width, height: height, depth: depth}}
   end
 
   @doc false
   def parse_gif(data) do
-    next_bytes = :erlang.binary_part(data, {6, 4})
+    next_bytes = :erlang.binary_part(data, {6, 5})
     <<width::little-unsigned-integer-size(16), rest::binary>> = next_bytes
-    <<height::little-unsigned-integer-size(16), _rest::binary>> = rest
-    {:ok, %Dimensions{width: width, height: height}}
+    <<height::little-unsigned-integer-size(16), rest::binary>> = rest
+    # From GIF spec: the lowest 3 bits represent the bit depth minus 1
+    <<depth::little-unsigned-integer-size(8), _rest::binary>> = rest
+    {:ok, %Dimensions{width: width, height: height, depth: (depth >>> 5) + 1}}
   end
 
   @doc false
   def parse_bmp(data) do
-    new_bytes = :erlang.binary_part(data, {14, 14})
+    new_bytes = :erlang.binary_part(data, {14, 16})
     <<char::8, _rest::binary>> = new_bytes
 
-    %{width: width, height: height} =
+    %{width: width, height: height, depth: depth} =
       case char do
         40 ->
-          part = :erlang.binary_part(new_bytes, {4, :erlang.byte_size(new_bytes) - 5})
+          part = :erlang.binary_part(new_bytes, {4, :erlang.byte_size(new_bytes) - 4})
           <<width::little-unsigned-integer-size(32), rest::binary>> = part
-          <<height::little-unsigned-integer-size(32), _rest::binary>> = rest
-          %{width: width, height: height}
+          <<height::little-unsigned-integer-size(32), rest::binary>> = rest
+          <<_::little-unsigned-integer-size(16), rest::binary>> = rest
+          <<depth::little-unsigned-integer-size(16), _rest::binary>> = rest
+          %{width: width, height: height, depth: depth}
 
         _ ->
-          part = :erlang.binary_part(new_bytes, {4, 8})
+          part = :erlang.binary_part(new_bytes, {4, 12})
           <<width::native-unsigned-integer-size(16), rest::binary>> = part
-          <<height::native-unsigned-integer-size(16), _rest::binary>> = rest
-          %{width: width, height: height}
+          <<height::native-unsigned-integer-size(16), rest::binary>> = rest
+          <<_::little-unsigned-integer-size(16), rest::binary>> = rest
+          <<depth::little-unsigned-integer-size(16), _rest::binary>> = rest
+          %{width: width, height: height, depth: depth}
       end
 
-    {:ok, %Dimensions{width: width, height: height}}
+    {:ok, %Dimensions{width: width, height: height, depth: depth}}
   end
 
   defp next_bytes_until_match(byte, bytes) do
