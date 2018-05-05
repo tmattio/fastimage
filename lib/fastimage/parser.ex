@@ -1,6 +1,6 @@
 defmodule Fastimage.Parser do
   use Bitwise
-  
+
   @moduledoc false
   alias Fastimage.{Dimensions, Error, Parser, Stream, Utils}
 
