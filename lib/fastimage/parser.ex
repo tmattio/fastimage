@@ -128,10 +128,21 @@ defmodule Fastimage.Parser do
         end
 
       :read ->
-        next_bytes = :erlang.binary_part(next_data, {3, :erlang.byte_size(next_data) - 3})
+        next_bytes = :erlang.binary_part(next_data, {2, :erlang.byte_size(next_data) - 3})
+        <<bits_per_sample::unsigned-integer-size(8), next_bytes::binary>> = next_bytes
         <<height::unsigned-integer-size(16), next_bytes::binary>> = next_bytes
-        <<width::unsigned-integer-size(16), _next_bytes::binary>> = next_bytes
-        {:ok, %Dimensions{width: width, height: height, depth: 24}}
+        <<width::unsigned-integer-size(16), next_bytes::binary>> = next_bytes
+        <<number_of_components::unsigned-integer-size(8), _next_bytes::binary>> = next_bytes
+
+        bits_per_pixel = bits_per_sample * number_of_components
+
+        {:ok,
+         %Dimensions{
+           width: width,
+           height: height,
+           channels: number_of_components,
+           bits_per_pixel: bits_per_pixel
+         }}
     end
   end
 
@@ -176,11 +187,25 @@ defmodule Fastimage.Parser do
 
   @doc false
   def parse_png(data) do
-    next_bytes = :erlang.binary_part(data, {16, 9})
+    next_bytes = :erlang.binary_part(data, {16, 10})
     <<width::unsigned-integer-size(32), next_bytes::binary>> = next_bytes
     <<height::unsigned-integer-size(32), next_bytes::binary>> = next_bytes
-    <<depth::unsigned-integer-size(8), _next_bytes::binary>> = next_bytes
-    {:ok, %Dimensions{width: width, height: height, depth: depth}}
+    <<bits_per_channel::unsigned-integer-size(8), next_bytes::binary>> = next_bytes
+    <<color_type::unsigned-integer-size(8), _next_bytes::binary>> = next_bytes
+
+    channels =
+      case color_type do
+        0 -> 1
+        2 -> 3
+        3 -> 1
+        4 -> 2
+        6 -> 4
+      end
+
+    bits_per_pixel = bits_per_channel * channels
+
+    {:ok,
+     %Dimensions{width: width, height: height, channels: channels, bits_per_pixel: bits_per_pixel}}
   end
 
   @doc false
@@ -189,8 +214,8 @@ defmodule Fastimage.Parser do
     <<width::little-unsigned-integer-size(16), rest::binary>> = next_bytes
     <<height::little-unsigned-integer-size(16), rest::binary>> = rest
     # From GIF spec: the lowest 3 bits represent the bit depth minus 1
-    <<depth::little-unsigned-integer-size(8), _rest::binary>> = rest
-    {:ok, %Dimensions{width: width, height: height, depth: (depth >>> 5) + 1}}
+    <<bits_per_pixel::little-unsigned-integer-size(8), _rest::binary>> = rest
+    {:ok, %Dimensions{width: width, height: height, bits_per_pixel: (bits_per_pixel &&& 7) + 1}}
   end
 
   @doc false
@@ -198,26 +223,26 @@ defmodule Fastimage.Parser do
     new_bytes = :erlang.binary_part(data, {14, 16})
     <<char::8, _rest::binary>> = new_bytes
 
-    %{width: width, height: height, depth: depth} =
+    %{width: width, height: height, bits_per_pixel: bits_per_pixel} =
       case char do
         40 ->
           part = :erlang.binary_part(new_bytes, {4, :erlang.byte_size(new_bytes) - 4})
           <<width::little-unsigned-integer-size(32), rest::binary>> = part
           <<height::little-unsigned-integer-size(32), rest::binary>> = rest
           <<_::little-unsigned-integer-size(16), rest::binary>> = rest
-          <<depth::little-unsigned-integer-size(16), _rest::binary>> = rest
-          %{width: width, height: height, depth: depth}
+          <<bits_per_pixel::little-unsigned-integer-size(16), _rest::binary>> = rest
+          %{width: width, height: height, bits_per_pixel: bits_per_pixel}
 
         _ ->
           part = :erlang.binary_part(new_bytes, {4, 12})
           <<width::native-unsigned-integer-size(16), rest::binary>> = part
           <<height::native-unsigned-integer-size(16), rest::binary>> = rest
           <<_::little-unsigned-integer-size(16), rest::binary>> = rest
-          <<depth::little-unsigned-integer-size(16), _rest::binary>> = rest
-          %{width: width, height: height, depth: depth}
+          <<bits_per_pixel::little-unsigned-integer-size(16), _rest::binary>> = rest
+          %{width: width, height: height, bits_per_pixel: bits_per_pixel}
       end
 
-    {:ok, %Dimensions{width: width, height: height, depth: depth}}
+    {:ok, %Dimensions{width: width, height: height, bits_per_pixel: bits_per_pixel}}
   end
 
   defp next_bytes_until_match(byte, bytes) do

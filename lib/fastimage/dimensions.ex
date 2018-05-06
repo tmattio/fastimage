@@ -4,11 +4,13 @@ defmodule Fastimage.Dimensions do
 
   defstruct width: nil,
             height: nil,
-            depth: nil
+            channels: nil,
+            bits_per_pixel: nil
 
   @type t :: %Dimensions{
           width: integer() | nil,
           height: integer() | nil,
-          depth: integer() | nil
+          channels: integer() | nil,
+          bits_per_pixel: integer() | nil
         }
 end

@@ -2,10 +2,36 @@ defmodule FastimageTest do
   use ExUnit.Case, async: true
   doctest Fastimage
 
-  @expected_jpeg_size %Fastimage.Dimensions{width: 283, height: 142, depth: 24}
-  @expected_png_size %Fastimage.Dimensions{width: 283, height: 142, depth: 8}
-  @expected_gif_size %Fastimage.Dimensions{width: 283, height: 142, depth: 8}
-  @expected_bmp_size %Fastimage.Dimensions{width: 283, height: 142, depth: 24}
+  @expected_jpeg_size %Fastimage.Dimensions{
+    width: 283,
+    height: 142,
+    channels: 3,
+    bits_per_pixel: 24
+  }
+  @expected_png_size %Fastimage.Dimensions{
+    width: 283,
+    height: 142,
+    channels: 3,
+    bits_per_pixel: 24
+  }
+  @expected_png_alpha_size %Fastimage.Dimensions{
+    width: 544,
+    height: 184,
+    channels: 4,
+    bits_per_pixel: 32
+  }
+  @expected_gif_size %Fastimage.Dimensions{
+    width: 283,
+    height: 142,
+    channels: nil,
+    bits_per_pixel: 8
+  }
+  @expected_bmp_size %Fastimage.Dimensions{
+    width: 283,
+    height: 142,
+    channels: nil,
+    bits_per_pixel: 24
+  }
 
   @fastimage_task_timeout 3_000
 
@@ -23,6 +49,7 @@ defmodule FastimageTest do
 
   @jpg_binary File.read!("./priv/test.jpg")
   @png_binary File.read!("./priv/test.png")
+  @png_alpha_binary File.read!("./priv/googlelogo_color_272x92dp.png")
   @gif_binary File.read!("./priv/test.gif")
   @bmp_binary File.read!("./priv/test.bmp")
 
@@ -43,7 +70,9 @@ defmodule FastimageTest do
     expected_type = {:ok, :jpeg}
 
     actual_size = Fastimage.size(@jpg_url_with_query)
-    expected_size = {:ok, %Fastimage.Dimensions{width: 40, height: 40, depth: 24}}
+
+    expected_size =
+      {:ok, %Fastimage.Dimensions{width: 40, height: 40, channels: 3, bits_per_pixel: 24}}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -99,6 +128,17 @@ defmodule FastimageTest do
 
     expected_type = {:ok, :png}
     expected_size = {:ok, @expected_png_size}
+
+    assert(actual_type == expected_type)
+    assert(actual_size == expected_size)
+  end
+
+  test "Get type and size of binary png with alpha object" do
+    actual_type = Fastimage.type(@png_alpha_binary)
+    actual_size = Fastimage.size(@png_alpha_binary)
+
+    expected_type = {:ok, :png}
+    expected_size = {:ok, @expected_png_alpha_size}
 
     assert(actual_type == expected_type)
     assert(actual_size == expected_size)
@@ -189,7 +229,7 @@ defmodule FastimageTest do
 
   test "Get the size of an image behind a redirect" do
     actual_size = Fastimage.size(@jpg_with_redirect)
-    expected_size = {:ok, %Fastimage.Dimensions{width: 1200, height: 1230, depth: 24}}
+    expected_size = {:ok, %Fastimage.Dimensions{width: 1200, height: 1230, channels: 24}}
 
     assert(actual_size == expected_size)
   end
@@ -211,12 +251,12 @@ defmodule FastimageTest do
 
   defp list_expected_results do
     result = [
-      %Fastimage.Dimensions{width: 283, height: 142, depth: 24},
-      %Fastimage.Dimensions{width: 40, height: 40, depth: 24},
-      %Fastimage.Dimensions{width: 1200, height: 1230, depth: 24},
-      %Fastimage.Dimensions{width: 283, height: 142, depth: 24},
-      %Fastimage.Dimensions{width: 283, height: 142, depth: 24},
-      %Fastimage.Dimensions{width: 283, height: 142, depth: 24}
+      %Fastimage.Dimensions{width: 283, height: 142, channels: 24},
+      %Fastimage.Dimensions{width: 40, height: 40, channels: 24},
+      %Fastimage.Dimensions{width: 1200, height: 1230, channels: 24},
+      %Fastimage.Dimensions{width: 283, height: 142, channels: 24},
+      %Fastimage.Dimensions{width: 283, height: 142, channels: 24},
+      %Fastimage.Dimensions{width: 283, height: 142, channels: 24}
     ]
 
     Enum.reduce(1..10, [], fn _i, acc ->
